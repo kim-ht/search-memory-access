@@ -64,11 +64,9 @@ if __name__ == '__main__':
     functions = ConvertAddrtoOffset(functions, text_base)
     ViewFunctions(functions)
     with open(file_name, "rb") as f:
-	file_data = f.read()
+        file_data = f.read()
     for entry_point, exit_point, function_name in functions:
-	print function_name + '():'
+        print function_name + '():'
         Disassemble(file_data, entry_point, exit_point)
         print ''
-
-
 
