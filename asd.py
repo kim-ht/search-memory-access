@@ -45,16 +45,35 @@ def ViewFunctions(functions):
     for entry_point, exit_point, function_name in functions:
         print '%x-%x: %s()' % (entry_point, exit_point, function_name)
 
-def Disassemble(file_data, entry_point, exit_point):
+def GetAddrofMemroyAccess(file_name):
+    with open(file_name, "rb") as f:
+        file_data = f.read()
     memory_access = []
+    for entry_point, exit_point, function_name in functions:
+        code = file_data[entry_point:exit_point]
+        md = Cs(CS_ARCH_X86, CS_MODE_64)
+        for i in md.disasm(code, entry_point):
+            tmp = re.findall('\[.+\]', i.op_str)
+            if len(tmp) != 0:
+                if ('rip' not in tmp[0]):
+                    memory_access.append((i.address, exit_point))
+    return memory_access
+
+def Disassemble(file_name, entry_point, exit_point):
+    with open(file_name, "rb") as f:
+        file_data = f.read()
+    end = entry_point + 5
+    if (end > exit_point):
+        end = exit_point
     code = file_data[entry_point:exit_point]
     md = Cs(CS_ARCH_X86, CS_MODE_64)
     for i in md.disasm(code, entry_point):
-        tmp = re.findall('\[.+\]', i.op_str)
-        if len(tmp) != 0:
-            if ('rip' not in tmp[0]):
-                memory_access
-                print "0x%x:\t%s\t%s" %(i.address, i.mnemonic, i.op_str)
+        #tmp = re.findall('\[.+\]', i.op_str)
+        #if len(tmp) != 0:
+        #    if ('rip' not in tmp[0]):
+        print "0x%x:\t%s\t%s" %(i.address, i.mnemonic, i.op_str)
+        if (i.address > end):
+            break
 
 if __name__ == '__main__':
     file_name = sys.argv[1]
@@ -63,10 +82,8 @@ if __name__ == '__main__':
     functions = GetFunctions(file_name)
     functions = ConvertAddrtoOffset(functions, text_base)
     ViewFunctions(functions)
-    with open(file_name, "rb") as f:
-        file_data = f.read()
-    for entry_point, exit_point, function_name in functions:
-        print function_name + '():'
-        Disassemble(file_data, entry_point, exit_point)
+    memory_access = GetAddrofMemroyAccess(file_name)
+    for entry_point, exit_point in memory_access:
+        print 'entry_point: ' + hex(entry_point)
+        Disassemble(file_name, entry_point, exit_point)
         print ''
-
